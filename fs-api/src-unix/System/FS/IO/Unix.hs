@@ -86,6 +86,7 @@ open fp openMode = Posix.openFd fp posixOpenMode fileFlags
 
     isExcl AllowExisting = False
     isExcl MustBeNew     = True
+    isExcl MustExist     = False
 # else
 open fp openMode = Posix.openFd fp posixOpenMode fileMode fileFlags
   where
@@ -110,6 +111,7 @@ open fp openMode = Posix.openFd fp posixOpenMode fileMode fileFlags
 
     isExcl AllowExisting = False
     isExcl MustBeNew     = True
+    isExcl MustExist     = False
 # endif
 
 -- | Writes the data pointed by the input 'Ptr Word8' into the input 'FHandle'.
