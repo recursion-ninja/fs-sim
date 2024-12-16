@@ -237,10 +237,15 @@ getDir fp =
 --    2. It did not already exists when we expected to (when passed 'MustExist').
 openFile :: Monoid a
          => FsPath -> AllowExisting -> FsTree a -> Either FsTreeError (FsTree a)
-openFile fp ex = alterFile fp Left (Right mempty) $ \a -> case ex of
-    AllowExisting -> Right a
-    MustBeNew     -> Left (FsExists fp)
-    MustExist     -> Left (FsMissing fp (pathLast fp :| []))
+openFile fp ex = alterFile fp Left caseDoesNotExist caseAlreadyExist
+  where
+    caseAlreadyExist a = case ex of
+      MustBeNew -> Left (FsExists fp)
+      _         -> Right a
+
+    caseDoesNotExist = case ex of
+      MustExist -> Left (FsMissing fp (pathLast fp :| []))
+      _         -> Right mempty
 
 -- | Replace the contents of the specified file (which must exist)
 replace :: FsPath -> a -> FsTree a -> Either FsTreeError (FsTree a)

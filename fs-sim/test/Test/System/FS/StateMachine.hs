@@ -1066,9 +1066,10 @@ data Tag =
 
   -- Open with MustExist, but the file does not exist.
   --
+  -- > DoesFileExist fp
   -- > h <- Open fp (AppendMode _)
-  | TagAssumeExistsFail
-  
+  | TagAssumeExists
+
 
   -- Reading returns an empty bytestring when EOF
   --
@@ -1143,7 +1144,7 @@ tag = C.classify [
     , tagPutSeekGet Set.empty Set.empty
     , tagPutSeekNegGet Set.empty Set.empty
     , tagExclusiveFail
-    , tagAssumeExistsFail
+--    , tagAssumeExistsFail -- Set.empty
     , tagReadEOF
     , tagPread
     , tagPutGetBuf Set.empty
@@ -1491,11 +1492,19 @@ tag = C.classify [
 
     tagAssumeExistsFail :: EventPred
     tagAssumeExistsFail = C.predicate $ \ev ->
+{-      
+    tagClosedTwice closed = successful $ \ev _suc ->
+      case eventMockCmd ev of
+        Close (Handle h _) | Set.member h closed -> Left TagClosedTwice
+        Close (Handle h _) -> Right $ tagClosedTwice $ Set.insert h closed
+        _otherwise -> Right $ tagClosedTwice closed
+        (DoesFileExist _, Bool False) -> Left TagDoesFileExistKO
+-}
       case (eventMockCmd ev, eventMockResp ev) of
         (Open _ mode, Resp (Left fsError))
           | MustExist <- allowExisting mode
           , fsErrorType fsError == FsResourceDoesNotExist ->
-            Left TagAssumeExistsFail
+            Left TagAssumeExists
         _otherwise -> Right tagAssumeExistsFail
 
     tagReadEOF :: EventPred
